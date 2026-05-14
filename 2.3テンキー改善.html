@@ -1,0 +1,2041 @@
+<!-- 119受報支援アプリ UIモック第2.3版 -->
+<!-- 第2.2版からの主な変更：
+・テンキーをPCテンキー配列へ変更
+・電話番号入力欄でもテンキー表示
+・別欄へ移動したらテンキー自動終了
+・生年月日テンキーに「年」「月」「日」決定ボタン追加
+・年→月→日へ入力欄自動移動
+・西暦・大正・昭和・平成・令和をボタン化
+-->
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>119受報支援アプリ UIモック第2.3版</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:"Yu Gothic","Meiryo",sans-serif;
+  background:#eef1f5;
+  color:#1f2937;
+  padding-bottom:160px;
+}
+header{
+  background:#991b1b;
+  color:white;
+  padding:12px 14px;
+}
+header h1{margin:0;font-size:21px}
+.screen{display:none}
+.screen.active{display:block}
+.container{max-width:980px;margin:auto;padding:10px}
+.card{
+  background:white;
+  border-radius:14px;
+  padding:12px;
+  margin-bottom:10px;
+  box-shadow:0 2px 8px rgba(0,0,0,.12);
+}
+.top-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+.top-btn{
+  border:none;
+  border-radius:18px;
+  min-height:125px;
+  font-size:28px;
+  font-weight:bold;
+  box-shadow:0 3px 10px rgba(0,0,0,.18);
+  cursor:pointer;
+}
+.top-btn small{display:block;font-size:14px;margin-top:8px;color:#374151}
+.fire{background:#fee2e2}
+.ems{background:#dbeafe}
+.rescue{background:#ffedd5}
+.other{background:#dcfce7}
+.status{
+  position:sticky;
+  top:0;
+  z-index:20;
+  background:#111827;
+  color:white;
+  padding:10px 12px;
+  border-radius:0 0 14px 14px;
+  margin:-10px -10px 10px;
+}
+.status-main{font-size:20px;font-weight:bold;line-height:1.4}
+.status-sub{font-size:15px;color:#d1d5db;margin-top:3px;line-height:1.4}
+.app-layout{
+  display:grid;
+  grid-template-columns:82px 1fr;
+  gap:10px;
+}
+.side-menu{
+  position:sticky;
+  top:72px;
+  align-self:start;
+  display:grid;
+  gap:8px;
+}
+.menu-btn{
+  border:none;
+  border-radius:14px;
+  padding:11px 5px;
+  min-height:58px;
+  background:#e5e7eb;
+  font-size:14px;
+  font-weight:bold;
+  cursor:pointer;
+  box-shadow:0 2px 5px rgba(0,0,0,.12);
+}
+.menu-btn.active{
+  background:#2563eb!important;
+  color:white!important;
+}
+.menu-btn.done{
+  background:#16a34a;
+  color:white;
+}
+.menu-btn.pending{
+  background:#fff7ed;
+  color:#9a3412;
+  border:2px solid #fb923c;
+  animation: blink 1.1s infinite;
+}
+@keyframes blink{
+  0%{opacity:1}
+  50%{opacity:.45}
+  100%{opacity:1}
+}
+.menu-btn.operation{
+  background:#111827;
+  color:white;
+  border:2px solid #111827;
+}
+.menu-separator{
+  height:6px;
+  border-bottom:2px solid #9ca3af;
+  margin-bottom:3px;
+}
+.panel{display:none}
+.panel.active{display:block}
+.section-title{
+  font-size:20px;
+  font-weight:bold;
+  border-left:8px solid #991b1b;
+  padding-left:10px;
+  margin-bottom:10px;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(135px,1fr));
+  gap:8px;
+}
+.town-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+}
+.big-select{
+  border:none;
+  border-radius:14px;
+  padding:20px 8px;
+  background:white;
+  font-size:20px;
+  font-weight:bold;
+  box-shadow:0 2px 7px rgba(0,0,0,.15);
+  cursor:pointer;
+}
+.big-select.selected{background:#2563eb;color:white}
+.small-btn{
+  border:none;
+  border-radius:12px;
+  padding:12px 8px;
+  background:#e5e7eb;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.small-btn.selected{background:#2563eb;color:white}
+.era-row{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:8px;
+}
+.era-btn{
+  border:none;
+  border-radius:12px;
+  padding:13px 6px;
+  background:#e5e7eb;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+}
+.era-btn.selected{
+  background:#2563eb;
+  color:white;
+}
+.row{
+  display:grid;
+  grid-template-columns:115px 1fr;
+  gap:8px;
+  align-items:start;
+  margin-bottom:9px;
+}
+label{font-size:16px;font-weight:bold;padding-top:8px}
+input,textarea{
+  width:100%;
+  font-size:18px;
+  padding:10px;
+  border:1px solid #cbd5e1;
+  border-radius:10px;
+  background:white;
+}
+textarea{min-height:74px;resize:vertical}
+textarea.large-input{
+  min-height:125px;
+  font-size:20px;
+}
+.kana-row{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:7px;
+}
+.area-name{font-size:17px}
+.area-yomi{font-size:13px;color:#555;margin-top:4px}
+.area-selected{background:#dcfce7!important;border:2px solid #16a34a}
+.fold{
+  margin-top:10px;
+  border-top:1px solid #e5e7eb;
+  padding-top:10px;
+}
+.fold summary{
+  font-size:18px;
+  font-weight:bold;
+  cursor:pointer;
+  padding:10px;
+  background:#f3f4f6;
+  border-radius:10px;
+}
+.nav-row{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:12px;
+  border-top:1px solid #e5e7eb;
+  padding-top:10px;
+}
+.nav-btn{
+  border:none;
+  border-radius:10px;
+  padding:12px 14px;
+  font-size:17px;
+  font-weight:bold;
+  cursor:pointer;
+  margin:4px;
+}
+.back{background:#374151;color:white}
+.reset{background:#dc2626;color:white}
+.cancel{background:#f59e0b;color:white}
+.history{background:#0f766e;color:white}
+.end{background:#4b5563;color:white}
+.next{background:#2563eb;color:white}
+.confirm{background:#7c3aed;color:white}
+.confirm-box{
+  background:#f9fafb;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  padding:12px;
+  margin-bottom:10px;
+}
+.confirm-line{
+  font-size:18px;
+  padding:8px 0;
+  border-bottom:1px solid #e5e7eb;
+}
+.confirm-line:last-child{border-bottom:none}
+.confirm-label{
+  font-weight:bold;
+  color:#374151;
+  display:inline-block;
+  min-width:95px;
+}
+.fixed-memo{
+  position:fixed;
+  left:0;
+  right:0;
+  bottom:0;
+  z-index:50;
+  background:#111827;
+  color:white;
+  padding:9px 12px;
+  box-shadow:0 -3px 10px rgba(0,0,0,.25);
+}
+.fixed-title{font-weight:bold;margin-bottom:5px;font-size:15px}
+.fixed-memo textarea{
+  height:92px;
+  min-height:92px;
+  background:#f9fafb;
+}
+.history-list button{
+  width:100%;
+  text-align:left;
+  border:none;
+  border-radius:10px;
+  padding:12px;
+  margin-bottom:8px;
+  background:#f3f4f6;
+  font-size:16px;
+}
+.keypad{
+  display:none;
+  position:fixed;
+  right:14px;
+  bottom:170px;
+  width:265px;
+  z-index:80;
+  background:white;
+  border-radius:16px;
+  padding:10px;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);
+}
+.keypad.active{display:block}
+.keypad-display{
+  font-size:20px;
+  font-weight:bold;
+  text-align:center;
+  padding:8px;
+  background:#f3f4f6;
+  border-radius:8px;
+  margin-bottom:8px;
+}
+.keypad-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+}
+.keypad button{
+  border:none;
+  border-radius:10px;
+  padding:12px;
+  font-size:20px;
+  font-weight:bold;
+  background:#e5e7eb;
+}
+.keypad .decision{
+  background:#2563eb;
+  color:white;
+}
+.keypad .danger{
+  background:#dc2626;
+  color:white;
+}
+.keypad-mode-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-top:8px;
+}
+@media(max-width:720px){
+  .container{padding:8px}
+  .top-grid{gap:10px}
+  .top-btn{min-height:115px;font-size:25px}
+  .app-layout{grid-template-columns:76px 1fr;gap:8px}
+  .menu-btn{font-size:13px;min-height:54px}
+  .row{grid-template-columns:1fr}
+  .grid{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+  .town-grid{grid-template-columns:repeat(3,1fr)}
+  .era-row{grid-template-columns:repeat(5,1fr)}
+}
+</style>
+</head>
+
+<body onclick="handleBodyClick(event)">
+<header>
+  <h1>119受報支援アプリ UIモック第2.3版</h1>
+</header>
+
+<div class="container">
+
+  <div id="topScreen" class="screen active">
+    <div class="card">
+      <div class="section-title">災害区分選択</div>
+      <div class="top-grid">
+        <button class="top-btn fire" onclick="startReception('火災')">火災<small>建物・林野・車両</small></button>
+        <button class="top-btn ems" onclick="startReception('救急')">救急<small>急病・負傷・事故</small></button>
+        <button class="top-btn rescue" onclick="startReception('救助')">救助<small>交通・水難・山岳</small></button>
+        <button class="top-btn other" onclick="startReception('その他')">その他<small>警戒・相談・捜索等</small></button>
+      </div>
+    </div>
+    <div class="card">
+      <button class="nav-btn history" onclick="openHistory()">過去受報参照</button>
+    </div>
+  </div>
+
+  <div id="workScreen" class="screen">
+    <div class="status">
+      <div class="status-main">選択中：<span id="mainLabel">未選択</span> ／ <span id="subLabel">種別未選択</span></div>
+      <div class="status-sub">発生場所：<span id="placeLabel">未入力</span></div>
+      <div class="status-sub">傷病者：<span id="patientLabel">未入力</span>　通報者：<span id="callerLabel">未入力</span></div>
+    </div>
+
+    <div class="app-layout">
+      <div class="side-menu">
+        <button id="operationMenu" class="menu-btn operation" onclick="openPanel('actionPanel',this)">操作</button>
+        <div class="menu-separator"></div>
+        <button id="typeMenu" class="menu-btn pending active" onclick="openPanel('typePanel',this)">種別</button>
+        <button id="placeMenu" class="menu-btn pending" onclick="openPanel('placePanel',this)">場所</button>
+        <button id="patientMenu" class="menu-btn pending" onclick="openPanel('patientPanel',this)">傷病者</button>
+        <button id="callerMenu" class="menu-btn pending" onclick="openPanel('callerPanel',this)">通報者</button>
+        <button id="confirmMenu" class="menu-btn" onclick="openPanel('confirmPanel',this);renderConfirm()">確認</button>
+      </div>
+
+      <main>
+        <section id="typePanel" class="panel active card">
+          <div class="section-title">種別選択</div>
+          <div id="frequentTypes" class="grid"></div>
+          <details id="otherTypesBox" class="fold">
+            <summary>上記項目以外を表示</summary>
+            <div id="otherTypes" class="grid" style="margin-top:10px"></div>
+          </details>
+
+          <div class="nav-row">
+            <button class="nav-btn cancel" onclick="clearSubType()">種別を取り消す</button>
+            <button class="nav-btn next" onclick="openPanelById('placePanel')">場所へ</button>
+          </div>
+        </section>
+
+        <section id="placePanel" class="panel card">
+          <div class="section-title">発生場所</div>
+          <div class="row"><label>町名</label><div id="townButtons" class="town-grid"></div></div>
+          <div class="row"><label>50音索引</label><div id="kanaButtons" class="kana-row"></div></div>
+          <div class="row"><label>地域名</label><div id="areaButtons" class="grid"></div></div>
+          <div class="row"><label>選択中</label><input id="selectedPlace" readonly placeholder="町名・地域名"></div>
+          <button class="nav-btn cancel" onclick="removeArea()">地域名を取り消す</button>
+          <div class="row" style="margin-top:10px"><label>番地・世帯主</label><textarea id="addressMemo" class="large-input" oninput="updatePlace()" placeholder="番地、世帯主、目標物など"></textarea></div>
+
+          <div class="nav-row">
+            <button class="nav-btn back" onclick="openPanelById('typePanel')">種別へ戻る</button>
+            <button class="nav-btn next" onclick="openPanelById('patientPanel')">傷病者へ</button>
+          </div>
+        </section>
+
+        <section id="patientPanel" class="panel card">
+          <div class="section-title">傷病者情報</div>
+          <div class="row"><label>氏名</label><textarea id="patientName" class="large-input" oninput="updateLabels()" placeholder="氏名不明の場合は「不明」等"></textarea></div>
+
+          <div class="row">
+            <label>生年月日区分</label>
+            <div class="era-row">
+              <button class="era-btn" onclick="setEra('taisho',this)">大正</button>
+              <button class="era-btn" onclick="setEra('showa',this)">昭和</button>
+              <button class="era-btn" onclick="setEra('heisei',this)">平成</button>
+              <button class="era-btn" onclick="setEra('reiwa',this)">令和</button>
+              <button class="era-btn selected" onclick="setEra('western',this)">西暦</button>
+            </div>
+          </div>
+
+          <div class="row"><label>生年月日</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+              <input id="birthYear" readonly onclick="openKeypad(this,'birthYear')" placeholder="年">
+              <input id="birthMonth" readonly onclick="openKeypad(this,'birthMonth')" placeholder="月">
+              <input id="birthDay" readonly onclick="openKeypad(this,'birthDay')" placeholder="日">
+            </div>
+          </div>
+          <div class="row"><label>年齢</label><input id="ageDisplay" readonly placeholder="自動表示"></div>
+
+          <div class="nav-row">
+            <button class="nav-btn back" onclick="openPanelById('placePanel')">場所へ戻る</button>
+            <button class="nav-btn next" onclick="openPanelById('callerPanel')">通報者へ</button>
+          </div>
+        </section>
+
+        <section id="callerPanel" class="panel card">
+          <div class="section-title">通報者情報</div>
+          <div class="row"><label>氏名</label><textarea id="callerName" class="large-input" oninput="updateLabels()" placeholder="氏名不明の場合は「不明」等"></textarea></div>
+          <div class="row"><label>関係性</label><textarea id="callerRelation" class="large-input" oninput="updateCallerDone()" placeholder="本人・家族・近隣者・通行人など"></textarea></div>
+          <div class="row"><label>電話番号</label><input id="callerPhone" placeholder="電話番号" readonly onclick="openKeypad(this,'phone')"></div>
+
+          <div class="nav-row">
+            <button class="nav-btn back" onclick="openPanelById('patientPanel')">傷病者へ戻る</button>
+            <button class="nav-btn confirm" onclick="openPanelById('confirmPanel');renderConfirm()">確認へ</button>
+          </div>
+        </section>
+
+        <section id="confirmPanel" class="panel card">
+          <div class="section-title">受報内容確認</div>
+          <div id="confirmContent" class="confirm-box"></div>
+
+          <div class="nav-row">
+            <button class="nav-btn back" onclick="openPanelById('callerPanel')">通報者へ戻る</button>
+            <button class="nav-btn reset" onclick="resetReception()">リセット</button>
+          </div>
+        </section>
+
+        <section id="actionPanel" class="panel card">
+          <div class="section-title">操作</div>
+          <button class="nav-btn back" onclick="backTop()">トップへ戻る</button>
+          <button class="nav-btn reset" onclick="resetReception()">リセット</button>
+          <button class="nav-btn history" onclick="openHistory()">過去受報参照</button>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div id="historyScreen" class="screen">
+    <div class="card">
+      <div class="section-title">過去受報参照</div>
+      <div id="historyList" class="history-list"></div>
+      <button class="nav-btn end" onclick="closeHistory()">参照終了</button>
+    </div>
+    <div id="historyDetail" class="card" style="display:none"></div>
+  </div>
+
+</div>
+
+<div class="fixed-memo">
+  <div class="fixed-title">常時メモ欄</div>
+  <textarea id="globalMemo" placeholder="聴取中の自由メモ。ページ遷移しても維持されます。"></textarea>
+</div>
+
+<div id="keypad" class="keypad" onclick="event.stopPropagation()">
+  <div id="keypadDisplay" class="keypad-display">入力</div>
+  <div class="keypad-grid">
+    <button onclick="keyInput('7')">7</button>
+    <button onclick="keyInput('8')">8</button>
+    <button onclick="keyInput('9')">9</button>
+    <button onclick="keyInput('4')">4</button>
+    <button onclick="keyInput('5')">5</button>
+    <button onclick="keyInput('6')">6</button>
+    <button onclick="keyInput('1')">1</button>
+    <button onclick="keyInput('2')">2</button>
+    <button onclick="keyInput('3')">3</button>
+    <button class="danger" onclick="keyAC()">AC</button>
+    <button onclick="keyInput('0')">0</button>
+    <button onclick="keyBS()">BS</button>
+  </div>
+  <div class="keypad-mode-row">
+    <button class="decision" onclick="confirmBirthPart('year')">年</button>
+    <button class="decision" onclick="confirmBirthPart('month')">月</button>
+    <button class="decision" onclick="confirmBirthPart('day')">日</button>
+  </div>
+  <button style="width:100%;margin-top:8px" onclick="closeKeypad()">閉じる</button>
+</div>
+
+<script>
+const typeData = {
+  "火災": {
+    frequent:["建物火災","林野火災","車両火災"],
+    other:["船舶火災","航空機火災","その他火災","爆発"]
+  },
+  "救急": {
+    frequent:["急病","一般負傷","交通事故"],
+    other:["水難事故","労働災害","運動競技","加害事故","資器材輸送","転院","ドクターヘリ","ヘリ搬送（その他）","自然災害","自尊行為"]
+  },
+  "救助": {
+    frequent:["交通事故","水難事故","山岳事故"],
+    other:["自然災害","機械事故","建物事故","ガス・酸欠事故","遭難","その他"]
+  },
+  "その他": {
+    frequent:["警戒","救急相談","病院手配","捜索"],
+    other:["怪煙","自火報鳴動","自然災害","住警器鳴動","防火相談","その他問い合わせ"]
+  }
+};
+
+const towns = ["厳原町","美津島町","豊玉町","峰町","上県町","上対馬町"];
+const kanaGroups = ["あ","か","さ","た","な","は","ま","や","ら","わ"];
+
+const areaData = {
+  "厳原町": [
+    {
+      "name": "曲",
+      "yomi": "ﾏｶﾞﾘ",
+      "x": "-17763.30",
+      "y": "134948.80"
+    },
+    {
+      "name": "小浦",
+      "yomi": "ｺｳﾗ",
+      "x": "-17837.70",
+      "y": "136268.40"
+    },
+    {
+      "name": "南室",
+      "yomi": "ﾅﾑﾛ",
+      "x": "-18329.71",
+      "y": "135321.82"
+    },
+    {
+      "name": "阿須",
+      "yomi": "ｱｽﾞ",
+      "x": "-18714.92",
+      "y": "134723.47"
+    },
+    {
+      "name": "桟原",
+      "yomi": "ｻｼﾞｷﾊﾞﾗ",
+      "x": "-19354.35",
+      "y": "134613.51"
+    },
+    {
+      "name": "宮谷",
+      "yomi": "ﾐﾔﾀﾞﾆ",
+      "x": "-19298.20",
+      "y": "134146.10"
+    },
+    {
+      "name": "日吉",
+      "yomi": "ﾋﾖｼ",
+      "x": "-18926.20",
+      "y": "133785.80"
+    },
+    {
+      "name": "天道茂",
+      "yomi": "ﾃﾝﾄﾞｳｼｹﾞ",
+      "x": "-18911.40",
+      "y": "133439.80"
+    },
+    {
+      "name": "田渕",
+      "yomi": "ﾀﾌﾞﾁ",
+      "x": "-18907.50",
+      "y": "133177.70"
+    },
+    {
+      "name": "大手橋",
+      "yomi": "ｵｵﾃﾊﾞｼ",
+      "x": "-18933.80",
+      "y": "132906.90"
+    },
+    {
+      "name": "中村",
+      "yomi": "ﾅｶﾑﾗ",
+      "x": "-19190.70",
+      "y": "133575.90"
+    },
+    {
+      "name": "今屋敷",
+      "yomi": "ｲﾏﾔｼｷ",
+      "x": "-19301.50",
+      "y": "133158.10"
+    },
+    {
+      "name": "国分",
+      "yomi": "ｺｸﾌﾞ",
+      "x": "-19253.40",
+      "y": "132889.50"
+    },
+    {
+      "name": "久田道",
+      "yomi": "ｸﾀﾐﾁ",
+      "x": "-19368.30",
+      "y": "132324.60"
+    },
+    {
+      "name": "久田",
+      "yomi": "ｸﾀ",
+      "x": "-20007.32",
+      "y": "131218.33"
+    },
+    {
+      "name": "春田屋敷",
+      "yomi": "ﾊﾙﾀﾔｼｷ",
+      "x": "-19615.37",
+      "y": "131682.80"
+    },
+    {
+      "name": "尾浦",
+      "yomi": "ｵｳﾗ",
+      "x": "-19938.22",
+      "y": "128643.36"
+    },
+    {
+      "name": "安神",
+      "yomi": "ｱｶﾞﾐ",
+      "x": "-20687.81",
+      "y": "126757.92"
+    },
+    {
+      "name": "東里",
+      "yomi": "ﾋｶﾞｼｻﾞﾄ",
+      "x": "-18589.59",
+      "y": "133296.18"
+    },
+    {
+      "name": "西里",
+      "yomi": "ﾆｼｻﾞﾄ",
+      "x": "-19365.85",
+      "y": "133747.24"
+    },
+    {
+      "name": "北里",
+      "yomi": "ｷﾀｻﾞﾄ",
+      "x": "-18607.42",
+      "y": "134857.64"
+    },
+    {
+      "name": "日掛",
+      "yomi": "ﾋｶｹﾞ",
+      "x": "-22942.83",
+      "y": "133010.14"
+    },
+    {
+      "name": "大板",
+      "yomi": "ｵｵｲﾀ",
+      "x": "-24347.98",
+      "y": "133966.33"
+    },
+    {
+      "name": "士富",
+      "yomi": "ｼﾄﾐ",
+      "x": "-23838.73",
+      "y": "134726.44"
+    },
+    {
+      "name": "若田",
+      "yomi": "ﾜｶﾀ",
+      "x": "-23446.98",
+      "y": "135470.09"
+    },
+    {
+      "name": "経塚",
+      "yomi": "ｷﾖｳﾂﾞｶ",
+      "x": "-24214.12",
+      "y": "135054.02"
+    },
+    {
+      "name": "樫根",
+      "yomi": "ｶｼﾈ",
+      "x": "-26034.66",
+      "y": "135751.16"
+    },
+    {
+      "name": "床谷",
+      "yomi": "ﾄｺﾔ",
+      "x": "-25431.47",
+      "y": "135975.23"
+    },
+    {
+      "name": "下原",
+      "yomi": "ｼﾓﾊﾞﾙ",
+      "x": "-26008.61",
+      "y": "136131.22"
+    },
+    {
+      "name": "小茂田",
+      "yomi": "ｺﾓﾀﾞ",
+      "x": "-27909.86",
+      "y": "136327.82"
+    },
+    {
+      "name": "椎根",
+      "yomi": "ｼｲﾈ",
+      "x": "-28286.43",
+      "y": "135243.20"
+    },
+    {
+      "name": "阿連",
+      "yomi": "ｱﾚ",
+      "x": "-27467.27",
+      "y": "140724.97"
+    },
+    {
+      "name": "久和",
+      "yomi": "ｸﾜ",
+      "x": "-22225.75",
+      "y": "124949.70"
+    },
+    {
+      "name": "与良内院",
+      "yomi": "ﾖﾗﾅｲｲﾝ",
+      "x": "-24585.70",
+      "y": "123248.20"
+    },
+    {
+      "name": "豆酘内院",
+      "yomi": "ﾂﾂﾅｲｲﾝ",
+      "x": "-24695.21",
+      "y": "123186.05"
+    },
+    {
+      "name": "浅藻",
+      "yomi": "ｱｻﾞﾓ",
+      "x": "-26661.74",
+      "y": "122714.63"
+    },
+    {
+      "name": "豆酘",
+      "yomi": "ﾂﾂ",
+      "x": "-29006.35",
+      "y": "124264.77"
+    },
+    {
+      "name": "豆酘瀬",
+      "yomi": "ﾂﾂｾ",
+      "x": "-29020.27",
+      "y": "127019.00"
+    },
+    {
+      "name": "佐須瀬",
+      "yomi": "ｻｽｾ",
+      "x": "-29133.23",
+      "y": "127069.29"
+    },
+    {
+      "name": "内山",
+      "yomi": "ｳﾁﾔﾏ",
+      "x": "-24616.69",
+      "y": "128376.88"
+    },
+    {
+      "name": "上槻",
+      "yomi": "ｺｳﾂｷ",
+      "x": "-29029.67",
+      "y": "131747.42"
+    },
+    {
+      "name": "久根田舎",
+      "yomi": "ｸﾈｲﾅｶ",
+      "x": "-28152.35",
+      "y": "129945.52"
+    },
+    {
+      "name": "久根浜",
+      "yomi": "ｸﾈﾊﾏ",
+      "x": "-29379.33",
+      "y": "129037.92"
+    }
+  ],
+  "美津島町": [
+    {
+      "name": "吹崎",
+      "yomi": "ﾌｸｻﾞｷ",
+      "x": "-22709.40",
+      "y": "143696.00"
+    },
+    {
+      "name": "加志",
+      "yomi": "ｶｼ",
+      "x": "-24175.69",
+      "y": "142242.40"
+    },
+    {
+      "name": "今里",
+      "yomi": "ｲﾏｻﾞﾄ",
+      "x": "-25330.86",
+      "y": "142712.68"
+    },
+    {
+      "name": "尾崎",
+      "yomi": "ｵｻｷ",
+      "x": "-25090.57",
+      "y": "145304.62"
+    },
+    {
+      "name": "鶏知甲",
+      "yomi": "ｹﾁｺｳ",
+      "x": "-17113.50",
+      "y": "140244.40"
+    },
+    {
+      "name": "鶏知乙",
+      "yomi": "ｹﾁｵﾂ",
+      "x": "-16392.66",
+      "y": "140965.60"
+    },
+    {
+      "name": "根緒",
+      "yomi": "ﾈｵ",
+      "x": "-16930.78",
+      "y": "137422.25"
+    },
+    {
+      "name": "大船越",
+      "yomi": "ｵｵﾌﾅｺｼ",
+      "x": "-13457.13",
+      "y": "141571.91"
+    },
+    {
+      "name": "緒方",
+      "yomi": "ｵｶﾀ",
+      "x": "-11079.70",
+      "y": "142757.50"
+    },
+    {
+      "name": "久須保",
+      "yomi": "ｸｽﾎﾞ",
+      "x": "-12538.32",
+      "y": "143259.59"
+    },
+    {
+      "name": "女護島",
+      "yomi": "ﾒｺﾞｼﾏ",
+      "x": "-12732.42",
+      "y": "143985.91"
+    },
+    {
+      "name": "島山",
+      "yomi": "ｼﾏﾔﾏ",
+      "x": "-16703.13",
+      "y": "145976.75"
+    },
+    {
+      "name": "洲藻",
+      "yomi": "ｽﾓ",
+      "x": "-19691.50",
+      "y": "140749.13"
+    },
+    {
+      "name": "箕形",
+      "yomi": "ﾐｶﾀ",
+      "x": "-21925.70",
+      "y": "142707.91"
+    },
+    {
+      "name": "竹敷",
+      "yomi": "ﾀｹｼｷ",
+      "x": "-18156.38",
+      "y": "143751.59"
+    },
+    {
+      "name": "黒瀬",
+      "yomi": "ｸﾛｾ",
+      "x": "-19241.88",
+      "y": "143430.97"
+    },
+    {
+      "name": "面天奈",
+      "yomi": "ﾒﾝﾃﾝﾅ",
+      "x": "-18796.57",
+      "y": "144740.53"
+    },
+    {
+      "name": "昼ヶ浦",
+      "yomi": "ﾋﾙｶﾞｳﾗ",
+      "x": "-20481.59",
+      "y": "146131.02"
+    },
+    {
+      "name": "玉調",
+      "yomi": "ﾀﾏﾂﾞｹ",
+      "x": "-13031.71",
+      "y": "145270.93"
+    },
+    {
+      "name": "犬吠",
+      "yomi": "ｲﾇﾎﾞｴ",
+      "x": "-12135.90",
+      "y": "145265.36"
+    },
+    {
+      "name": "大山",
+      "yomi": "ｵﾔﾏ",
+      "x": "-13651.11",
+      "y": "147154.34"
+    },
+    {
+      "name": "畠浦",
+      "yomi": "ﾊﾀｹｳﾗ",
+      "x": "-11432.83",
+      "y": "146693.81"
+    },
+    {
+      "name": "志土路",
+      "yomi": "ｼﾄﾛ",
+      "x": "-12374.91",
+      "y": "147238.58"
+    },
+    {
+      "name": "小船越",
+      "yomi": "ｺﾌﾅｺｼ",
+      "x": "-12272.86",
+      "y": "148120.17"
+    },
+    {
+      "name": "芦浦",
+      "yomi": "ﾖｼｶﾞｳﾗ",
+      "x": "-11857.69",
+      "y": "148959.01"
+    },
+    {
+      "name": "賀谷",
+      "yomi": "ｶﾞﾔ",
+      "x": "-11426.31",
+      "y": "151747.17"
+    },
+    {
+      "name": "濃部",
+      "yomi": "ﾉﾌﾞ",
+      "x": "-13828.92",
+      "y": "151226.13"
+    },
+    {
+      "name": "鴨居瀬",
+      "yomi": "ｶﾓｲｾ",
+      "x": "-10558.32",
+      "y": "147795.75"
+    },
+    {
+      "name": "赤島",
+      "yomi": "ｱｶｼﾏ",
+      "x": "-8303.79",
+      "y": "149722.18"
+    },
+    {
+      "name": "大梶",
+      "yomi": "ｵｵｶｼﾞ",
+      "x": "-17400.23",
+      "y": "136511.71"
+    }
+  ],
+  "豊玉町": [
+    {
+      "name": "千尋藻",
+      "yomi": "ﾁﾛﾓ",
+      "x": "-11579.20",
+      "y": "155446.13"
+    },
+    {
+      "name": "曽",
+      "yomi": "ｿ",
+      "x": "-12323.77",
+      "y": "156820.58"
+    },
+    {
+      "name": "位ノ端",
+      "yomi": "ｲﾉﾊｼ",
+      "x": "-12164.22",
+      "y": "158374.59"
+    },
+    {
+      "name": "仁位",
+      "yomi": "ﾆｲ",
+      "x": "-16312.50",
+      "y": "154235.10"
+    },
+    {
+      "name": "長田",
+      "yomi": "ﾅｶﾞﾀ",
+      "x": "-16741.47",
+      "y": "155509.22"
+    },
+    {
+      "name": "田",
+      "yomi": "ﾀ",
+      "x": "-18370.38",
+      "y": "158129.88"
+    },
+    {
+      "name": "銘",
+      "yomi": "ﾒｲ",
+      "x": "-19909.47",
+      "y": "158038.40"
+    },
+    {
+      "name": "小綱",
+      "yomi": "ｺﾂﾞﾅ",
+      "x": "-19678.97",
+      "y": "156872.96"
+    },
+    {
+      "name": "大綱",
+      "yomi": "ｵｵﾂﾅ",
+      "x": "-19619.72",
+      "y": "156558.92"
+    },
+    {
+      "name": "志多浦",
+      "yomi": "ｼﾀﾉｳﾗ",
+      "x": "-20028.65",
+      "y": "156257.64"
+    },
+    {
+      "name": "佐保",
+      "yomi": "ｻﾎ",
+      "x": "-19480.64",
+      "y": "154450.47"
+    },
+    {
+      "name": "卯麦",
+      "yomi": "ｳﾑｷﾞ",
+      "x": "-18620.11",
+      "y": "153319.09"
+    },
+    {
+      "name": "糠",
+      "yomi": "ﾇｶ",
+      "x": "-17788.27",
+      "y": "153438.77"
+    },
+    {
+      "name": "糸瀬",
+      "yomi": "ｲﾄｾ",
+      "x": "-16311.49",
+      "y": "151768.99"
+    },
+    {
+      "name": "嵯峨",
+      "yomi": "ｻｶﾞ",
+      "x": "-17218.02",
+      "y": "150067.62"
+    },
+    {
+      "name": "佐志賀",
+      "yomi": "ｻｼｶ",
+      "x": "-17793.39",
+      "y": "150751.32"
+    },
+    {
+      "name": "貝鮒",
+      "yomi": "ｶｲﾌﾅ",
+      "x": "-19976.12",
+      "y": "149985.88"
+    },
+    {
+      "name": "和板",
+      "yomi": "ﾜｲﾀ",
+      "x": "-14373.84",
+      "y": "153249.88"
+    },
+    {
+      "name": "鑓川",
+      "yomi": "ﾔﾘｶﾜ",
+      "x": "-12550.43",
+      "y": "154749.00"
+    },
+    {
+      "name": "横浦",
+      "yomi": "ﾖｺｳﾗ",
+      "x": "-12789.87",
+      "y": "153503.89"
+    },
+    {
+      "name": "塩浜",
+      "yomi": "ｼｵﾊﾏ",
+      "x": "-11430.95",
+      "y": "153727.41"
+    },
+    {
+      "name": "見世浦",
+      "yomi": "ﾐｾｳﾗ",
+      "x": "-10612.10",
+      "y": "153700.83"
+    },
+    {
+      "name": "落土",
+      "yomi": "ｵﾃﾄﾞ",
+      "x": "-9857.35",
+      "y": "154293.04"
+    },
+    {
+      "name": "浦底",
+      "yomi": "ｳﾗｿｺ",
+      "x": "-13600.31",
+      "y": "153002.77"
+    },
+    {
+      "name": "貝口",
+      "yomi": "ｶｲｸﾞﾁ",
+      "x": "-20403.91",
+      "y": "151244.62"
+    },
+    {
+      "name": "深里",
+      "yomi": "ﾌｶﾘ",
+      "x": "-19968.78",
+      "y": "149958.79"
+    },
+    {
+      "name": "屏風",
+      "yomi": "ﾋﾞﾖﾌﾞ",
+      "x": "-20646.17",
+      "y": "150042.29"
+    },
+    {
+      "name": "東加藤",
+      "yomi": "ﾋｶﾞｼｶﾄｳ",
+      "x": "-20606.39",
+      "y": "150015.88"
+    },
+    {
+      "name": "水崎",
+      "yomi": "ﾐｽﾞｻｷ",
+      "x": "-21080.21",
+      "y": "150221.74"
+    },
+    {
+      "name": "唐洲",
+      "yomi": "ｶﾗｽ",
+      "x": "-21338.81",
+      "y": "149990.10"
+    },
+    {
+      "name": "加志志",
+      "yomi": "ｶｼｼ",
+      "x": "-21473.18",
+      "y": "150066.66"
+    },
+    {
+      "name": "妙見",
+      "yomi": "ﾐﾖｳｹﾝ",
+      "x": "-22336.73",
+      "y": "150727.60"
+    },
+    {
+      "name": "廻",
+      "yomi": "ﾏﾜﾘ",
+      "x": "-23513.33",
+      "y": "150978.28"
+    }
+  ],
+  "峰町": [
+    {
+      "name": "佐賀",
+      "yomi": "ｻｶ",
+      "x": "-11438.70",
+      "y": "161349.51"
+    },
+    {
+      "name": "櫛",
+      "yomi": "ｸｼ",
+      "x": "-12197.68",
+      "y": "158850.33"
+    },
+    {
+      "name": "志多賀",
+      "yomi": "ｼﾀｶ",
+      "x": "-9277.80",
+      "y": "163879.29"
+    },
+    {
+      "name": "志越",
+      "yomi": "ｼｺｴ",
+      "x": "-8305.30",
+      "y": "165044.84"
+    },
+    {
+      "name": "三浦",
+      "yomi": "ﾐｳﾗ",
+      "x": "-7112.70",
+      "y": "165743.97"
+    },
+    {
+      "name": "三根",
+      "yomi": "ﾐﾈ",
+      "x": "-16645.33",
+      "y": "162573.06"
+    },
+    {
+      "name": "狩尾",
+      "yomi": "ｶﾘｵ",
+      "x": "-18457.50",
+      "y": "161094.24"
+    },
+    {
+      "name": "木坂",
+      "yomi": "ｷｻｶ",
+      "x": "-20093.96",
+      "y": "161706.55"
+    },
+    {
+      "name": "青海",
+      "yomi": "ｵｳﾐ",
+      "x": "-20094.10",
+      "y": "162831.62"
+    },
+    {
+      "name": "津柳",
+      "yomi": "ﾂﾔﾅｷﾞ",
+      "x": "-18705.16",
+      "y": "164705.73"
+    },
+    {
+      "name": "吉田",
+      "yomi": "ﾖｼﾀﾞ",
+      "x": "-16335.84",
+      "y": "159770.36"
+    },
+    {
+      "name": "賀佐",
+      "yomi": "ｶｻ",
+      "x": "-18026.76",
+      "y": "160294.43"
+    }
+  ],
+  "上県町": [
+    {
+      "name": "佐須奈甲",
+      "yomi": "ｻｽﾅｺｳ",
+      "x": "-9258.80",
+      "y": "181308.55"
+    },
+    {
+      "name": "佐須奈乙",
+      "yomi": "ｻｽﾅｵﾂ",
+      "x": "-9083.18",
+      "y": "181534.80"
+    },
+    {
+      "name": "西津屋",
+      "yomi": "ﾆｼﾂﾔ",
+      "x": "-8389.71",
+      "y": "184804.32"
+    },
+    {
+      "name": "佐護北里",
+      "yomi": "ｻｺﾞｷﾀｻﾞﾄ",
+      "x": "-13125.95",
+      "y": "180636.55"
+    },
+    {
+      "name": "佐護西里",
+      "yomi": "ｻｺﾞﾆｼｻﾞﾄ",
+      "x": "-15375.60",
+      "y": "180508.75"
+    },
+    {
+      "name": "佐護東里",
+      "yomi": "ｻｺﾞﾋｶﾞｼｻﾞﾄ",
+      "x": "-11273.95",
+      "y": "177031.00"
+    },
+    {
+      "name": "佐護南里",
+      "yomi": "ｻｺﾞﾐﾅﾐｻﾞﾄ",
+      "x": "-15269.55",
+      "y": "178061.00"
+    },
+    {
+      "name": "深山（佐護）",
+      "yomi": "ﾐﾔﾏ",
+      "x": "-12618.77",
+      "y": "178116.98"
+    },
+    {
+      "name": "仁田ノ内（佐護）",
+      "yomi": "ﾆﾀﾉｳﾁ",
+      "x": "-12958.34",
+      "y": "178184.76"
+    },
+    {
+      "name": "恵古（佐護）",
+      "yomi": "ｴｺ",
+      "x": "-13329.45",
+      "y": "178556.21"
+    },
+    {
+      "name": "中山（佐護）",
+      "yomi": "ﾅｶﾔﾏ",
+      "x": "-15152.27",
+      "y": "176286.81"
+    },
+    {
+      "name": "大保家（佐護）",
+      "yomi": "ｵｵﾎﾞｹ",
+      "x": "-15494.92",
+      "y": "176992.73"
+    },
+    {
+      "name": "井口（佐護）",
+      "yomi": "ｲｸﾁ",
+      "x": "-13711.06",
+      "y": "180041.12"
+    },
+    {
+      "name": "井口浜（佐護）",
+      "yomi": "ｲｸﾁﾊﾏ",
+      "x": "-12381.19",
+      "y": "181431.53"
+    },
+    {
+      "name": "友谷（佐護）",
+      "yomi": "ﾄﾓﾔ",
+      "x": "-14262.93",
+      "y": "180495.87"
+    },
+    {
+      "name": "湊（佐護）",
+      "yomi": "ﾐﾅﾄ",
+      "x": "-15222.61",
+      "y": "180741.51"
+    },
+    {
+      "name": "むくなし（佐護）",
+      "yomi": "ﾑｸﾅｼ",
+      "x": "-14228.07",
+      "y": "179757.27"
+    },
+    {
+      "name": "美止々（佐護）",
+      "yomi": "ﾐﾄﾄﾞ",
+      "x": "-11110.23",
+      "y": "179972.38"
+    },
+    {
+      "name": "飼所",
+      "yomi": "ｶｲﾄﾞｺﾛ",
+      "x": "-12905.60",
+      "y": "169231.95"
+    },
+    {
+      "name": "瀬田",
+      "yomi": "ｾﾀ",
+      "x": "-13141.56",
+      "y": "170480.87"
+    },
+    {
+      "name": "樫滝",
+      "yomi": "ｶｼﾀｷ",
+      "x": "-13694.20",
+      "y": "169772.78"
+    },
+    {
+      "name": "犬ヶ浦",
+      "yomi": "ｲﾇｶﾞｳﾗ",
+      "x": "-14826.67",
+      "y": "170362.61"
+    },
+    {
+      "name": "御園",
+      "yomi": "ﾐｿ",
+      "x": "-15227.25",
+      "y": "170965.75"
+    },
+    {
+      "name": "越高",
+      "yomi": "ｺｼﾀｶ",
+      "x": "-15490.40",
+      "y": "171721.56"
+    },
+    {
+      "name": "伊奈",
+      "yomi": "ｲﾅ",
+      "x": "-16903.98",
+      "y": "172699.11"
+    },
+    {
+      "name": "志多留",
+      "yomi": "ｼﾀﾙ",
+      "x": "-17422.90",
+      "y": "173493.08"
+    },
+    {
+      "name": "田ノ浜",
+      "yomi": "ﾀﾉﾊﾏ",
+      "x": "-18788.08",
+      "y": "173704.00"
+    },
+    {
+      "name": "鹿見",
+      "yomi": "ｼｼﾐ",
+      "x": "-16629.82",
+      "y": "167750.06"
+    },
+    {
+      "name": "久原",
+      "yomi": "ｸﾊﾞﾗ",
+      "x": "-17092.90",
+      "y": "167584.74"
+    },
+    {
+      "name": "女連",
+      "yomi": "ｳﾅﾂﾗ",
+      "x": "-17955.89",
+      "y": "167038.59"
+    }
+  ],
+  "上対馬町": [
+    {
+      "name": "河内",
+      "yomi": "ｶﾜﾁ",
+      "x": "-6412.19",
+      "y": "185190.09"
+    },
+    {
+      "name": "大浦",
+      "yomi": "ｵｵｳﾗ",
+      "x": "-5766.01",
+      "y": "184839.48"
+    },
+    {
+      "name": "鰐浦",
+      "yomi": "ﾜﾆｳﾗ",
+      "x": "-5092.30",
+      "y": "187240.99"
+    },
+    {
+      "name": "豊",
+      "yomi": "ﾄﾖ",
+      "x": "-3550.12",
+      "y": "187253.52"
+    },
+    {
+      "name": "泉",
+      "yomi": "ｲｽﾞﾐ",
+      "x": "-2267.01",
+      "y": "185534.02"
+    },
+    {
+      "name": "西泊",
+      "yomi": "ﾆｼﾄﾞﾏﾘ",
+      "x": "-1647.59",
+      "y": "183334.06"
+    },
+    {
+      "name": "古里",
+      "yomi": "ﾌﾙｻﾄ",
+      "x": "-2523.53",
+      "y": "183756.25"
+    },
+    {
+      "name": "比田勝",
+      "yomi": "ﾋﾀｶﾂ",
+      "x": "-3242.82",
+      "y": "183098.26"
+    },
+    {
+      "name": "網代",
+      "yomi": "ｱｼﾞﾛ",
+      "x": "-2175.43",
+      "y": "182663.80"
+    },
+    {
+      "name": "富ヶ浦",
+      "yomi": "ﾄﾐｶﾞｳﾗ",
+      "x": "-1686.77",
+      "y": "180340.72"
+    },
+    {
+      "name": "津和",
+      "yomi": "ﾂﾜ",
+      "x": "-2725.15",
+      "y": "181003.55"
+    },
+    {
+      "name": "唐舟志",
+      "yomi": "ﾄｳｼﾞｭｳｼ",
+      "x": "-2041.39",
+      "y": "179253.94"
+    },
+    {
+      "name": "浜久須",
+      "yomi": "ﾊﾏｸﾞｽ",
+      "x": "-4773.40",
+      "y": "180457.15"
+    },
+    {
+      "name": "玖須",
+      "yomi": "ｸｽ",
+      "x": "-5446.28",
+      "y": "181015.24"
+    },
+    {
+      "name": "大増",
+      "yomi": "ｵｵﾏｽ",
+      "x": "-5604.01",
+      "y": "179757.55"
+    },
+    {
+      "name": "舟志",
+      "yomi": "ｼﾕｳｼ",
+      "x": "-5679.45",
+      "y": "178235.13"
+    },
+    {
+      "name": "五根緒",
+      "yomi": "ｺﾞﾈｵ",
+      "x": "-2452.07",
+      "y": "176749.57"
+    },
+    {
+      "name": "琴",
+      "yomi": "ｷﾝ",
+      "x": "-3705.68",
+      "y": "172182.04"
+    },
+    {
+      "name": "茂木",
+      "yomi": "ﾓｷﾞ",
+      "x": "-2583.40",
+      "y": "173693.40"
+    },
+    {
+      "name": "芦見",
+      "yomi": "ｱｼﾐ",
+      "x": "-4190.16",
+      "y": "169969.00"
+    },
+    {
+      "name": "一重",
+      "yomi": "ﾋﾄｴ",
+      "x": "-4812.43",
+      "y": "169390.22"
+    },
+    {
+      "name": "小鹿",
+      "yomi": "ｵｼｶ",
+      "x": "-5798.41",
+      "y": "167597.56"
+    }
+  ]
+};
+
+let currentMain = "";
+let currentSub = "";
+let selectedTown = "";
+let selectedArea = "";
+let previousScreen = "topScreen";
+let activeKeyInput = null;
+let activeKeyMode = "";
+let selectedEra = "western";
+
+function show(id){
+  closeKeypad();
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function startReception(main){
+  currentMain = main;
+  currentSub = "";
+  selectedTown = "";
+  selectedArea = "";
+
+  document.getElementById('mainLabel').textContent = main;
+  document.getElementById('subLabel').textContent = '種別未選択';
+  document.getElementById('placeLabel').textContent = '未入力';
+
+  setMenuPendingAll();
+
+  renderTypes(main);
+  renderTownButtons();
+  renderKanaButtons();
+  openPanelById('typePanel');
+  show('workScreen');
+}
+
+function setMenuPendingAll(){
+  ['typeMenu','placeMenu','patientMenu','callerMenu'].forEach(id=>{
+    const btn = document.getElementById(id);
+    btn.classList.remove('done');
+    btn.classList.add('pending');
+  });
+}
+
+function setMenuDone(id){
+  const btn = document.getElementById(id);
+  if(!btn) return;
+  btn.classList.remove('pending');
+  btn.classList.add('done');
+}
+
+function renderTypes(main){
+  const frequent = document.getElementById('frequentTypes');
+  const other = document.getElementById('otherTypes');
+  const box = document.getElementById('otherTypesBox');
+  frequent.innerHTML = '';
+  other.innerHTML = '';
+  box.open = false;
+
+  typeData[main].frequent.forEach(t=>frequent.appendChild(typeButton(t)));
+  typeData[main].other.forEach(t=>other.appendChild(typeButton(t)));
+}
+
+function typeButton(name){
+  const btn = document.createElement('button');
+  btn.className = 'big-select';
+  btn.textContent = name;
+  btn.onclick = ()=>{
+    currentSub = name;
+    document.getElementById('subLabel').textContent = name;
+    document.querySelectorAll('.big-select').forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    setMenuDone('typeMenu');
+  };
+  return btn;
+}
+
+function clearSubType(){
+  currentSub = "";
+  document.getElementById('subLabel').textContent = '種別未選択';
+  document.querySelectorAll('.big-select').forEach(b=>b.classList.remove('selected'));
+  const btn = document.getElementById('typeMenu');
+  btn.classList.remove('done');
+  btn.classList.add('pending');
+}
+
+function openPanel(panelId, btn){
+  openPanelById(panelId);
+  document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function openPanelById(panelId){
+  closeKeypad();
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+
+  const map = {
+    typePanel:'typeMenu',
+    placePanel:'placeMenu',
+    patientPanel:'patientMenu',
+    callerPanel:'callerMenu',
+    confirmPanel:'confirmMenu',
+    actionPanel:'operationMenu'
+  };
+
+  document.querySelectorAll('.menu-btn').forEach(b=>b.classList.remove('active'));
+  const target = document.getElementById(map[panelId]);
+  if(target) target.classList.add('active');
+
+  if(panelId === 'confirmPanel') renderConfirm();
+}
+
+function renderTownButtons(){
+  const area = document.getElementById('townButtons');
+  area.innerHTML = '';
+  towns.forEach(t=>{
+    const btn = document.createElement('button');
+    btn.className = 'small-btn';
+    btn.textContent = t;
+    btn.onclick = ()=>{
+      selectedTown = t;
+      selectedArea = '';
+      document.querySelectorAll('#townButtons .small-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      document.getElementById('areaButtons').innerHTML = '';
+      updatePlace();
+    };
+    area.appendChild(btn);
+  });
+}
+
+function renderKanaButtons(){
+  const area = document.getElementById('kanaButtons');
+  area.innerHTML = '';
+  kanaGroups.forEach(k=>{
+    const btn = document.createElement('button');
+    btn.className = 'small-btn';
+    btn.textContent = k;
+    btn.onclick = ()=>showAreas(k);
+    area.appendChild(btn);
+  });
+}
+
+function normalizeYomi(yomi){
+  return String(yomi || '')
+    .normalize('NFKC')
+    .replace(/[ァ-ヶ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0x60));
+}
+
+function kanaMatch(group,yomi){
+  const normalized = normalizeYomi(yomi);
+  const first = normalized.charAt(0);
+  const maps = {
+    'あ':['あ','い','う','え','お'],
+    'か':['か','き','く','け','こ','が','ぎ','ぐ','げ','ご'],
+    'さ':['さ','し','す','せ','そ','ざ','じ','ず','ぜ','ぞ'],
+    'た':['た','ち','つ','て','と','だ','ぢ','づ','で','ど'],
+    'な':['な','に','ぬ','ね','の'],
+    'は':['は','ひ','ふ','へ','ほ','ば','び','ぶ','べ','ぼ','ぱ','ぴ','ぷ','ぺ','ぽ'],
+    'ま':['ま','み','む','め','も'],
+    'や':['や','ゆ','よ'],
+    'ら':['ら','り','る','れ','ろ'],
+    'わ':['わ','を','ん']
+  };
+  return (maps[group] || []).includes(first);
+}
+
+function showAreas(group){
+  const area = document.getElementById('areaButtons');
+  area.innerHTML = '';
+  if(!selectedTown){
+    area.innerHTML = '<p>先に町名を選択してください。</p>';
+    return;
+  }
+  const list = (areaData[selectedTown] || []).filter(a=>kanaMatch(group,a.yomi));
+  if(list.length === 0){
+    area.innerHTML = '<p>該当なし</p>';
+    return;
+  }
+  list.forEach(a=>{
+    const btn = document.createElement('button');
+    btn.className = 'small-btn';
+    btn.innerHTML = `<div class="area-name">${a.name}</div><div class="area-yomi">${a.yomi}</div>`;
+    btn.onclick = ()=>{
+      selectedArea = a.name;
+      document.querySelectorAll('#areaButtons .small-btn').forEach(b=>b.classList.remove('area-selected'));
+      btn.classList.add('area-selected');
+      updatePlace();
+    };
+    area.appendChild(btn);
+  });
+}
+
+function removeArea(){
+  selectedArea = '';
+  document.querySelectorAll('#areaButtons .small-btn').forEach(b=>b.classList.remove('area-selected'));
+  updatePlace();
+}
+
+function updatePlace(){
+  const detail = document.getElementById('addressMemo').value;
+  const base = [selectedTown, selectedArea].filter(Boolean).join(' ');
+  document.getElementById('selectedPlace').value = base;
+  document.getElementById('placeLabel').textContent = [base,detail].filter(Boolean).join(' ') || '未入力';
+
+  if(base || detail.trim()){
+    setMenuDone('placeMenu');
+  }
+}
+
+function updateLabels(){
+  const patient = document.getElementById('patientName').value.trim();
+  const caller = document.getElementById('callerName').value.trim();
+
+  document.getElementById('patientLabel').textContent = patient || '未入力';
+  document.getElementById('callerLabel').textContent = caller || '未入力';
+
+  if(patient){
+    setMenuDone('patientMenu');
+  }
+  updateCallerDone();
+}
+
+function updateCallerDone(){
+  const caller = document.getElementById('callerName').value.trim();
+  const relation = document.getElementById('callerRelation').value.trim();
+  const phone = document.getElementById('callerPhone').value.trim();
+
+  if(caller || relation || phone){
+    setMenuDone('callerMenu');
+  }
+}
+
+function setEra(era, btn){
+  selectedEra = era;
+  document.querySelectorAll('.era-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  calcAge();
+}
+
+function eraLabel(){
+  const labels = {
+    taisho:'大正',
+    showa:'昭和',
+    heisei:'平成',
+    reiwa:'令和',
+    western:'西暦'
+  };
+  return labels[selectedEra] || '西暦';
+}
+
+function openKeypad(input, mode){
+  event.stopPropagation();
+  activeKeyInput = input;
+  activeKeyMode = mode || '';
+  document.getElementById('keypadDisplay').textContent = input.value || '入力';
+  document.getElementById('keypad').classList.add('active');
+}
+
+function keyInput(n){
+  if(!activeKeyInput)return;
+  activeKeyInput.value += n;
+  document.getElementById('keypadDisplay').textContent = activeKeyInput.value;
+  if(activeKeyMode === 'phone'){
+    updateCallerDone();
+  }else{
+    calcAge();
+  }
+}
+
+function keyBS(){
+  if(!activeKeyInput)return;
+  activeKeyInput.value = activeKeyInput.value.slice(0,-1);
+  document.getElementById('keypadDisplay').textContent = activeKeyInput.value || '入力';
+  if(activeKeyMode === 'phone'){
+    updateCallerDone();
+  }else{
+    calcAge();
+  }
+}
+
+function keyAC(){
+  if(!activeKeyInput)return;
+  activeKeyInput.value = '';
+  document.getElementById('keypadDisplay').textContent = '入力';
+  if(activeKeyMode === 'phone'){
+    updateCallerDone();
+  }else{
+    calcAge();
+  }
+}
+
+function confirmBirthPart(part){
+  if(part === 'year'){
+    document.getElementById('birthMonth').click();
+  }else if(part === 'month'){
+    document.getElementById('birthDay').click();
+  }else if(part === 'day'){
+    closeKeypad();
+  }
+  calcAge();
+}
+
+function closeKeypad(){
+  document.getElementById('keypad').classList.remove('active');
+  activeKeyInput = null;
+  activeKeyMode = '';
+}
+
+function handleBodyClick(event){
+  const tag = event.target.tagName.toLowerCase();
+  const id = event.target.id;
+
+  if(id === 'birthYear' || id === 'birthMonth' || id === 'birthDay' || id === 'callerPhone'){
+    return;
+  }
+
+  if(tag === 'textarea' || tag === 'input' || tag === 'button' || tag === 'summary'){
+    if(!event.target.closest('#keypad')){
+      const isKeypadTarget = id === 'birthYear' || id === 'birthMonth' || id === 'birthDay' || id === 'callerPhone';
+      if(!isKeypadTarget) closeKeypad();
+    }
+  }
+}
+
+function toWesternYear(){
+  const y = Number(document.getElementById('birthYear').value);
+  if(!y)return null;
+  if(selectedEra==='western') return y;
+  if(selectedEra==='reiwa') return 2018 + y;
+  if(selectedEra==='heisei') return 1988 + y;
+  if(selectedEra==='showa') return 1925 + y;
+  if(selectedEra==='taisho') return 1911 + y;
+  return null;
+}
+
+function calcAge(){
+  const y = toWesternYear();
+  const m = Number(document.getElementById('birthMonth').value);
+  const d = Number(document.getElementById('birthDay').value);
+  const display = document.getElementById('ageDisplay');
+  if(!y || !m || !d){display.value='';return;}
+  const today = new Date();
+  let age = today.getFullYear() - y;
+  const tm = today.getMonth()+1;
+  const td = today.getDate();
+  if(tm < m || (tm === m && td < d)) age--;
+  display.value = (age < 0 || age > 130) ? '確認要' : age + '歳';
+}
+
+function renderConfirm(){
+  const content = document.getElementById('confirmContent');
+  content.innerHTML = `
+    <div class="confirm-line"><span class="confirm-label">災害区分</span>${currentMain || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">種別</span>${currentSub || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">発生場所</span>${document.getElementById('placeLabel').textContent || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">傷病者</span>${document.getElementById('patientName').value || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">生年月日</span>${getBirthText()}</div>
+    <div class="confirm-line"><span class="confirm-label">年齢</span>${document.getElementById('ageDisplay').value || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">通報者</span>${document.getElementById('callerName').value || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">関係性</span>${document.getElementById('callerRelation').value || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">電話番号</span>${document.getElementById('callerPhone').value || '未入力'}</div>
+    <div class="confirm-line"><span class="confirm-label">常時メモ</span>${document.getElementById('globalMemo').value || '未入力'}</div>
+  `;
+}
+
+function getBirthText(){
+  const y = document.getElementById('birthYear').value;
+  const m = document.getElementById('birthMonth').value;
+  const d = document.getElementById('birthDay').value;
+  if(!y && !m && !d) return '未入力';
+  return `${eraLabel()} ${y || '未'}年 ${m || '未'}月 ${d || '未'}日`;
+}
+
+function collectReception(){
+  return {
+    savedAt:new Date().toLocaleString('ja-JP'),
+    main:currentMain,
+    sub:currentSub,
+    place:document.getElementById('placeLabel').textContent,
+    patient:document.getElementById('patientName').value,
+    birth:getBirthText(),
+    age:document.getElementById('ageDisplay').value,
+    caller:document.getElementById('callerName').value,
+    relation:document.getElementById('callerRelation').value,
+    phone:document.getElementById('callerPhone').value,
+    memo:document.getElementById('globalMemo').value
+  };
+}
+
+function saveHistory(){
+  let histories = JSON.parse(localStorage.getItem('receptionHistoriesV23') || '[]');
+  histories.unshift(collectReception());
+  histories = histories.slice(0,20);
+  localStorage.setItem('receptionHistoriesV23',JSON.stringify(histories));
+}
+
+function resetReception(){
+  if(!confirm('現在の受報用紙を保存して、新しい受報用紙にしますか？')) return;
+  saveHistory();
+  document.querySelectorAll('input,textarea').forEach(el=>el.value='');
+  document.getElementById('areaButtons').innerHTML = '';
+  currentMain='';currentSub='';selectedTown='';selectedArea='';
+  selectedEra = 'western';
+  document.querySelectorAll('.era-btn').forEach(b=>b.classList.remove('selected'));
+  document.querySelectorAll('.era-btn')[4].classList.add('selected');
+
+  document.getElementById('mainLabel').textContent='未選択';
+  document.getElementById('subLabel').textContent='種別未選択';
+  document.getElementById('placeLabel').textContent='未入力';
+  document.getElementById('patientLabel').textContent='未入力';
+  document.getElementById('callerLabel').textContent='未入力';
+  closeKeypad();
+  show('topScreen');
+}
+
+function backTop(){show('topScreen')}
+
+function openHistory(){
+  previousScreen = document.querySelector('.screen.active').id;
+  const histories = JSON.parse(localStorage.getItem('receptionHistoriesV23') || '[]');
+  const list = document.getElementById('historyList');
+  list.innerHTML = '';
+  document.getElementById('historyDetail').style.display = 'none';
+  if(histories.length === 0){
+    list.innerHTML = '<p>保存された過去受報はありません。</p>';
+  }else{
+    histories.forEach(h=>{
+      const btn = document.createElement('button');
+      btn.textContent = `${h.savedAt}　${h.main || '未選択'}／${h.sub || '未選択'}　${h.place || ''}`;
+      btn.onclick = ()=>showHistoryDetail(h);
+      list.appendChild(btn);
+    });
+  }
+  show('historyScreen');
+}
+
+function showHistoryDetail(h){
+  const box = document.getElementById('historyDetail');
+  box.style.display = 'block';
+  box.innerHTML = `
+    <div class="section-title">受報内容</div>
+    <div class="row"><label>保存時刻</label><input readonly value="${h.savedAt || ''}"></div>
+    <div class="row"><label>種別</label><input readonly value="${h.main || ''} ／ ${h.sub || ''}"></div>
+    <div class="row"><label>場所</label><textarea readonly>${h.place || ''}</textarea></div>
+    <div class="row"><label>傷病者</label><textarea readonly>${h.patient || ''} ${h.birth || ''} ${h.age || ''}</textarea></div>
+    <div class="row"><label>通報者</label><textarea readonly>${h.caller || ''} ／ ${h.relation || ''} ／ ${h.phone || ''}</textarea></div>
+    <div class="row"><label>メモ</label><textarea readonly>${h.memo || ''}</textarea></div>
+  `;
+}
+
+function closeHistory(){show(previousScreen || 'topScreen')}
+</script>
+</body>
+</html>
